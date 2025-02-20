@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Payment Application</title>
+    <link rel="stylesheet"
+          href="payment.css">
+</head>
+
+<body>
+    <header>
+        <div class="logo">Payment App</div>
+        <nav>
+            <ul>
+                <li><a href="./dashboard.html">Home</a></li>
+                <li><a href="./payment.html">Pay</a></li>
+                <li><a href="./loginPage.html">Logout</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <div class="payment-form">
+        <h2>Payment Form</h2>
+        <form id="paymentForm">
+            <label for="from-email">From Email</label>
+            <input type="email"
+                   id="from-email"
+                   name="from-email"
+                   required
+                   disabled
+                   placeholder="Enter sender's email">
+
+            <label for="to-email">To Email</label>
+            <input type="email"
+                   id="to-email"
+                   name="to-email"
+                   required
+                   placeholder="Enter recipient's email">
+
+            <label for="amount">Amount</label>
+            <input type="number"
+                   id="amount"
+                   name="amount"
+                   required
+                   placeholder="Enter amount">
+
+            <button type="submit"
+                    id="submitButton"
+                    disabled>Pay</button>
+        </form>
+    </div>
+
+    <script>
+        let paymentDetails = {
+            fromEmail: '',
+            toEmail: '',
+            amount: 1500000
+        };
+
+        const userDetails = JSON.parse(localStorage.getItem('userDetails'));
+        const paymentInfo = JSON.parse(localStorage.getItem('paymentDetails'));
+        const userAPI = JSON.parse(localStorage.getItem('usersAPI')); // List of valid users
+        const fromText = document.getElementById('from-email');
+        const toText = document.getElementById('to-email');
+        const amount = document.getElementById('amount');
+        const submitButton = document.getElementById('submitButton');
+
+        let currentAmount = parseFloat(localStorage.getItem('amount')) || 1500000; // Default to 1500000 if not found
+
+        if (userDetails && userDetails.email) {
+            fromText.value = userDetails.email;
+        }
+
+        let paymentArr = [];
+        let totalAmount = 0;
+
+        // Populate paymentArr with existing paymentInfo if available
+        if (paymentInfo) {
+            for (let i = 0; i < paymentInfo.length; i++) {
+                const pData = paymentInfo[i];
+                let newPaymentDetails = {
+                    fromEmail: pData.fromEmail,
+                    toEmail: pData.toEmail,
+                    amount: pData.amount
+                };
+                paymentArr.push(newPaymentDetails);
+            }
+        }
+
+        // Function to validate email format and check if email exists in the usersAPI list
+        function validateEmail(email) {
+            const emailPattern = /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,6}$/; // Regex for valid email format
+            return emailPattern.test(email);
+        }
+
+        function isEmailInUsersAPI(email) {
+            return userAPI.some(user => user.email === email); // Check if email exists in usersAPI
+        }
+
+        function validateAmount(inputAmount) {
+            // Check if it's a valid number, no characters allowed
+            const amountNumber = parseFloat(inputAmount);
+            if (isNaN(amountNumber)) {
+                return false;
+            }
+
+            // Check if the amount allows up to 2 decimal places and is not greater than 75,000
+            const regex = /^\d+(\.\d{1,2})?$/;
+            if (!regex.test(inputAmount)) {
+                return false;
+            }
+
+            if (amountNumber > 75000) {
+                return false;
+            }
+
+            return true;
+        }
+
+        // Function to check if the form is valid
+        function isFormValid() {
+            let toEmail = toText.value.trim(); // Get and trim the email input
+            let enteredAmount = amount.value.trim(); // Get and trim the amount input
+
+            // Validate the 'toEmail' and 'amount' and check if they're empty
+            return validateEmail(toEmail) && isEmailInUsersAPI(toEmail) && validateAmount(enteredAmount) && toEmail !== '' && enteredAmount !== '';
+        }
+
+        // Event listener for form input to enable/disable submit button
+        function checkFormValidity() {
+            if (isFormValid()) {
+                submitButton.disabled = false;  // Enable the submit button if the form is valid
+            } else {
+                submitButton.disabled = true;   // Disable the submit button if the form is invalid
+            }
+        }
+
+        // Add input event listeners to validate the fields and check form validity
+        toText.addEventListener('input', checkFormValidity);
+        amount.addEventListener('input', checkFormValidity);
+
+        // Form submit event
+        document.getElementById("paymentForm").addEventListener("submit", function (event) {
+            event.preventDefault();
+
+            let toEmail = toText.value.trim(); // Get and trim the email input
+            let enteredAmount = amount.value.trim(); // Get and trim the amount input
+
+            // Validate the 'toEmail'
+            if (!validateEmail(toEmail)) {
+                alert("Please enter a valid email address (must contain '@' and '.' ).");
+                return; // Stop further execution
+            }
+
+            // Check if the email is in the usersAPI list
+            if (!isEmailInUsersAPI(toEmail)) {
+                alert("The provided email is not valid. Please select an email from the registered users.");
+                return; // Stop further execution
+            }
+
+            // Validate the 'amount'
+            if (!validateAmount(enteredAmount)) {
+                alert("Please enter a valid amount. It should be a number, not greater than 75,000, and can have up to 2 decimal places.");
+                return; // Stop further execution
+            }
+
+            // Create a new paymentDetails object with the form data
+            let newPaymentDetails = {
+                fromEmail: fromText.value,
+                toEmail: toEmail,
+                amount: parseFloat(enteredAmount)
+            };
+
+            // Add the amount to the total amount
+            totalAmount = totalAmount + newPaymentDetails.amount;
+
+            // Push the new paymentDetails object to the array
+            paymentArr.push(newPaymentDetails);
+
+            // Update the current amount by subtracting the transaction amount
+            currentAmount = currentAmount - newPaymentDetails.amount;
+
+            // Store the updated currentAmount in localStorage
+            localStorage.setItem('amount', currentAmount);
+
+            // Store the updated paymentDetails array in localStorage
+            localStorage.setItem('paymentDetails', JSON.stringify(paymentArr));
+
+            // Redirect to the dashboard
+            window.location.href = "dashboard.html";
+        });
+
+        // Initial check to disable the button if the form is invalid on page load
+        checkFormValidity();
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1.0">
+    <title>Payment Portal</title>
+    <link rel="stylesheet"
+          href="dashboard.css">
+</head>
+
+<body>
+    <!-- Header / Navigation Bar -->
+    <header>
+        <div class="nav-container">
+            <h1 class="logo">Pay Pal</h1>
+            <nav>
+                <ul>
+                    <li><a href="./dashboard.html">Home</a></li>
+                    <li><a href="./payment.html">Pay</a></li>
+                    <li><a href="./loginPage.html">Logout</a></li>
+                </ul>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <div class="container">
+        <h2>Dashboard Details</h2>
+
+        <p>Name: <span id="name"></span> </p>
+        <p>Balance: <span id="amount"></span> </p>
+    </div>
+
+    <div class="container"
+         style="max-width: 1000px;">
+        <h2>Transaction Details</h2>
+
+        <form class="payment-form">
+
+            <div class="transaction-details"
+                 id="transactionDetails">
+            </div>
+
+        </form>
+        <script>
+            const user = JSON.parse(window.localStorage.getItem('userDetails'));
+            const transactionDetails = JSON.parse(localStorage.getItem('paymentDetails'));
+            const storedAmount = parseFloat(localStorage.getItem('amount'));
+            const username = document.getElementById('name');
+            const amount = document.getElementById('amount');
+            const transactionData = document.getElementById('transactionDetails');
+            function getCurrentDate() { // function for fetching current date
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                let mm = today.getMonth() + 1; // Months start at 0!
+                let dd = today.getDate();
+
+                if (dd < 10) dd = '0' + dd;
+                if (mm < 10) mm = '0' + mm;
+
+                const formattedToday = dd + '/' + mm + '/' + yyyy;
+                return formattedToday;
+            }
+            if (user.username) {
+                username.textContent = user.username;
+            }
+            amount.textContent = "₹ " + Math.abs(storedAmount);
+            if (transactionDetails) {
+
+                // Create a plain text version
+                let tableContent = `
+             <table border="1">
+                     <thead>
+                         <tr>
+                                  <th>S.No</th>
+                                 <th>From Email</th>
+                                  <th>To Email</th>
+                                 <th>Amount</th>
+                                 <th>Date</th>
+                         </tr>
+                    </thead>
+
+                <!-- Table Body -->
+                    <tbody>`;
+
+                for (let i = 0; i < transactionDetails.length; i++) {
+                    const transaction = transactionDetails[i];
+                    tableContent = tableContent + `
+                   <tr>
+                    <td>${i + 1}</td>
+                    <td>${transaction.fromEmail}</td>
+                   <td>${transaction.toEmail}</td>
+                   <td>₹ ${transaction.amount}</td>
+                   <td>${getCurrentDate()}</td>
+                  </tr>`;
+                }
+
+                tableContent = tableContent + `
+                  </tbody>
+            </table>
+`;
+
+                // Inserting the table content into an element
+                transactionData.innerHTML = tableContent;
+                const amount = document.getElementById('amount')
+            }
+
+        </script>
+    </div>
+</body>
+
+</html>
